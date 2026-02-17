@@ -1,20 +1,24 @@
 /*
-Copyright 2024 New Vector Ltd.
-Copyright 2015, 2016 OpenMarket Ltd
+ * Copyright 2026 Element Creations Ltd.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
 
-SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Commercial
-Please see LICENSE files in the repository root for full details.
-*/
+.thumbnail {
+    max-width: 100px;
+    max-height: 100px;
+}
 
-.mx_LinkPreviewWidget {
-    margin: $spacing-16 0 $spacing-16 auto;
+.container {
+    margin: var(--cpd-space-4x) 0 var(--cpd-space-4x) auto;
     display: flex;
-    column-gap: $spacing-4;
-    border-inline-start: 2px solid $preview-widget-bar-color;
+    column-gap: var(--cpd-space-1x);
+    border-inline-start: 2px solid var(--cpd-color-bg-subtle-primary);
     border-radius: 2px;
     color: $info-plinth-fg-color;
 
-    .mx_MatrixChat_useCompactLayout & {
+    &.compactLayout & {
         margin-top: 6px;
         margin-bottom: 6px;
     }
@@ -23,12 +27,12 @@ Please see LICENSE files in the repository root for full details.
     .mx_LinkPreviewWidget_wrapImageCaption {
         display: flex;
         flex-wrap: wrap;
-        row-gap: $spacing-8;
+        row-gap: var(--cpd-space-2x);
         flex: 1;
 
         .mx_LinkPreviewWidget_image,
         .mx_LinkPreviewWidget_caption {
-            margin-inline-start: $spacing-16;
+            margin-inline-start: var(--cpd-space-4x);
             min-width: 0; /* Prevent blowout */
         }
 
@@ -61,7 +65,7 @@ Please see LICENSE files in the repository root for full details.
         }
 
         .mx_LinkPreviewWidget_description {
-            margin-top: $spacing-8;
+            margin-top: var(--cpd-space-2x);
             word-wrap: break-word;
             -webkit-line-clamp: 3;
         }
