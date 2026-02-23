@@ -95,7 +95,7 @@ class InnerTextualBody extends React.Component<IBodyProps & { urlPreviewViewMode
         },
 
         unhideWidget: () => {
-            this.props.urlPreviewViewModel.onShowClick();
+            void this.props.urlPreviewViewModel.onShowClick();
         },
     });
 
