@@ -13,6 +13,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { logger } from "matrix-js-sdk/src/logger";
 import escapeHtml from "escape-html";
 import { TooltipProvider } from "@vector-im/compound-web";
+import { I18nContext } from "@element-hq/web-shared-components";
 
 import Exporter from "./Exporter";
 import { mediaFromMxc } from "../../customisations/Media";
@@ -33,8 +34,6 @@ import { haveRendererForEvent } from "../../events/EventTileFactory";
 import { SDKContext, SdkContextClass } from "../../contexts/SDKContext.ts";
 
 import exportJS from "!!raw-loader!./exportJS";
-import { I18nContext } from "@element-hq/web-shared-components";
-import { ModuleApi } from "../../modules/Api.ts";
 
 export default class HTMLExporter extends Exporter {
     protected avatars: Map<string, boolean>;
@@ -269,10 +268,11 @@ export default class HTMLExporter extends Exporter {
     public getEventTile(mxEv: MatrixEvent, continuation: boolean, ref?: () => void): JSX.Element {
         return (
             <div className="mx_Export_EventWrapper" id={mxEv.getId()}>
-                <MatrixClientContext.Provider value={this.room.client}>
-                    <SDKContext.Provider value={SdkContextClass.instance}>
-                        <TooltipProvider>
-                            <I18nContext.Provider value={ModuleApi.instance.i18n}>
+                {/* Export rendering uses an isolated root, so provide I18nContext explicitly. */}
+                <I18nContext.Provider value={window.mxModuleApi.i18n}>
+                    <MatrixClientContext.Provider value={this.room.client}>
+                        <SDKContext.Provider value={SdkContextClass.instance}>
+                            <TooltipProvider>
                                 <EventTile
                                     mxEvent={mxEv}
                                     continuation={continuation}
@@ -294,10 +294,10 @@ export default class HTMLExporter extends Exporter {
                                     getRelationsForEvent={this.getRelationsForEvent}
                                     ref={ref}
                                 />
-                            </I18nContext.Provider>
-                        </TooltipProvider>
-                    </SDKContext.Provider>
-                </MatrixClientContext.Provider>
+                            </TooltipProvider>
+                        </SDKContext.Provider>
+                    </MatrixClientContext.Provider>
+                </I18nContext.Provider>
             </div>
         );
     }
