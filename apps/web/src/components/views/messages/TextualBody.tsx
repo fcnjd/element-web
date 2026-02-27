@@ -340,6 +340,7 @@ export default function TextualBody(props: IBodyProps): React.ReactElement {
                 mediaVisible: mediaVisible,
                 onImageClicked: onUrlPreviewImageClicked,
                 visible: props.showUrlPreview ?? false,
+                canHidePreview: true,
             }),
     );
 

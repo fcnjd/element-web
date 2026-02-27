@@ -74,16 +74,16 @@ export function LinkPreview({ onImageClick, compactLayout, ...preview }: LinkPre
             <div className={styles.wrapImageCaption}>
                 {img}
                 <div className={styles.caption}>
+                    <Text as="span" size="sm" weight="regular">
+                        {preview.siteName}
+                    </Text>
                     <Text type="body" size="md" className={styles.title}>
                         {tooltipCaption ? <Tooltip label={tooltipCaption}>{anchor}</Tooltip> : anchor}
-                        {preview.siteName && (
-                            <Text as="span" size="md" weight="regular">
-                                {" - " + preview.siteName}
-                            </Text>
-                        )}
                     </Text>
                     {preview.description && (
                         <Text
+                            type="body"
+                            size="md"
                             className={styles.description}
                             dangerouslySetInnerHTML={{ __html: preview.description }}
                         />

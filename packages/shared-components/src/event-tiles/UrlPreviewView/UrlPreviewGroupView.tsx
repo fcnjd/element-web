@@ -28,6 +28,7 @@ export interface UrlPreviewGroupViewProps {
 }
 
 export interface UrlPreviewGroupViewActions {
+    canHidePreview: boolean;
     onTogglePreviewLimit: () => void;
     onHideClick: () => Promise<void>;
     onImageClick: (preview: UrlPreviewViewSnapshotPreview) => void;
@@ -67,9 +68,11 @@ export function UrlPreviewGroupView({ vm }: UrlPreviewGroupViewProps): JSX.Eleme
                 ))}
                 {toggleButton}
             </div>
-            <IconButton size="20px" onClick={() => vm.onHideClick()} aria-label={_t("timeline|url_preview|close")}>
-                <CloseIcon />
-            </IconButton>
+            {vm.canHidePreview && (
+                <IconButton size="20px" onClick={() => vm.onHideClick()} aria-label={_t("timeline|url_preview|close")}>
+                    <CloseIcon />
+                </IconButton>
+            )}
         </div>
     );
 }

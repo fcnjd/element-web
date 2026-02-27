@@ -28,6 +28,7 @@ export interface UrlPreviewViewModelProps {
     mediaVisible: boolean;
     visible: boolean;
     onImageClicked: (preview: UrlPreviewViewSnapshotPreview) => void;
+    canHidePreview: boolean;
 }
 
 export const MAX_PREVIEWS_WHEN_LIMITED = 2;
@@ -294,6 +295,7 @@ export class UrlPreviewViewModel
             previewsLimited: true,
             overPreviewLimit: false,
             compactLayout: SettingsStore.getValue("useCompactLayout"),
+            canHidePreview: props.canHidePreview,
         });
         this.urlPreviewEnabledByUser = global.localStorage.getItem(storageKey) !== "1";
         this.urlPreviewVisible = props.visible;
@@ -348,6 +350,7 @@ export class UrlPreviewViewModel
             previewsLimited: this.limitPreviews,
             overPreviewLimit: this.links.length > MAX_PREVIEWS_WHEN_LIMITED,
         });
+        console.log("New snap", this.snapshot.current, this.visibility);
     }
 
     /**
@@ -356,6 +359,15 @@ export class UrlPreviewViewModel
      */
     public updateEventElement(eventElement: HTMLDivElement): Promise<void> {
         this.links = UrlPreviewViewModel.findLinks([eventElement]);
+        return this.computeSnapshot();
+    }
+
+    /**
+     * Trigger a recalculation of the links based upon a set of links.
+     * @param links A set of URLs
+     */
+    public updateWithLinks(links: string[]): Promise<void> {
+        this.links = links;
         return this.computeSnapshot();
     }
 
