@@ -39,7 +39,7 @@ test.describe("Event List Summary", () => {
     );
 
     test(
-        "should display a single ban message on its own",
+        "should display a single ban message on its own, with the user hidden",
         { tag: "@screenshot" },
         async ({ app, homeserver, page, user }) => {
             const { bot, roomId } = await setupRoom(app, homeserver, page, user);
@@ -58,7 +58,7 @@ test.describe("Event List Summary", () => {
             // When we ban the bot
             await app.client.ban(roomId, bot.credentials.userId);
 
-            // Then we say that
+            // Then we say that, but the name is hidden
             await expect(
                 page.locator(".mx_RoomView_body .mx_GenericEventListSummary[data-layout='group']", {
                     hasText: "banned",
@@ -103,7 +103,7 @@ test.describe("Event List Summary", () => {
     );
 
     test(
-        "should display multiple messages as a group",
+        "should display multiple messages as a group, and hide banned names",
         { tag: "@screenshot" },
         async ({ app, homeserver, page, user }) => {
             const { bot, roomId } = await setupRoom(app, homeserver, page, user);
@@ -122,7 +122,7 @@ test.describe("Event List Summary", () => {
             await app.client.inviteUser(roomId, bot.credentials.userId);
             await bot.joinRoom(roomId);
 
-            // Then those actions are gathered into a single summary
+            // Then those actions are gathered into a single summary, with the name hidden
             await expect(
                 page.locator(".mx_RoomView_body .mx_GenericEventListSummary[data-layout='group']", {
                     hasText: "and joined",
@@ -201,7 +201,7 @@ test.describe("Event List Summary", () => {
     );
 
     test(
-        "should display join/ban messages for multiple people as a group",
+        "should display join/ban messages for multiple people as a group, with banned names hidden",
         { tag: "@screenshot" },
         async ({ app, homeserver, page, user }) => {
             const { bot, roomId } = await setupRoom(app, homeserver, page, user);
@@ -231,7 +231,7 @@ test.describe("Event List Summary", () => {
             await bot.joinRoom(roomId);
             await bot2.joinRoom(roomId);
 
-            // Then those actions are gathered into a single summary
+            // Then those actions are gathered into a single summary, with banned names hidden
             await expect(
                 page.locator(".mx_RoomView_body .mx_GenericEventListSummary[data-layout='group']", {
                     hasText: "was removed, was invited, and joined",
@@ -251,7 +251,7 @@ test.describe("Event List Summary", () => {
             // here.
             await page.getByRole("button", { name: "expand" }).nth(3).click();
 
-            // Then we see all the individual actions
+            // Then we see all the individual actions, with banned names hidden
             await expect(
                 page.locator(".mx_RoomView_body .mx_GenericEventListSummary[data-layout='group']", {
                     hasText: "removed MyBot2",
