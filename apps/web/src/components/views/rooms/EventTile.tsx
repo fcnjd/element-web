@@ -107,6 +107,7 @@ import { EventPreview } from "./EventPreview";
 import { ElementCallEventType } from "../../../call-types";
 import { DecryptionFailureBodyViewModel } from "../../../viewmodels/message-body/DecryptionFailureBodyViewModel";
 import { E2eMessageSharedIcon } from "./EventTile/E2eMessageSharedIcon.tsx";
+import { getEventAriaLabel } from "../../../utils/getEventAriaLabel";
 import { E2ePadlock, E2ePadlockIcon } from "./EventTile/E2ePadlock.tsx";
 import SettingsStore from "../../../settings/SettingsStore";
 import {
@@ -261,6 +262,9 @@ export interface EventTileProps {
     // The following properties are used by EventTilePreview to disable tab indexes within the event tile
     hideTimestamp?: boolean;
     inhibitInteraction?: boolean;
+
+    // whether this tile is the active roving-tabindex navigation target in the message list
+    isActiveNavTarget?: boolean;
 
     ref?: Ref<UnwrappedEventTile>;
 }
@@ -456,6 +460,14 @@ export class UnwrappedEventTile extends React.Component<EventTileProps, IState> 
     private updateThread = (thread: Thread): void => {
         this.setState({ thread });
     };
+
+    /**
+     * Focus this event tile for keyboard navigation.
+     */
+    public focus(): void {
+        this.ref.current?.focus({ preventScroll: true, focusVisible: true });
+        this.ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
 
     public shouldComponentUpdate(nextProps: EventTileProps, nextState: IState): boolean {
         if (objectHasDiff(this.state, nextState)) {
@@ -1466,12 +1478,15 @@ export class UnwrappedEventTile extends React.Component<EventTileProps, IState> 
             default: {
                 // Pinned, Room, Search
                 // tab-index=-1 to allow it to be focusable but do not add tab stop for it, primarily for screen readers
+                // When isActiveNavTarget is true, tabIndex is 0 so it participates in the roving tabindex pattern.
+                const room = MatrixClientPeg.safeGet().getRoom(this.props.mxEvent.getRoomId()) ?? undefined;
                 return React.createElement(
                     this.props.as || "li",
                     {
                         "ref": this.ref,
                         "className": classes,
-                        "tabIndex": -1,
+                        "tabIndex": this.props.isActiveNavTarget ? 0 : -1,
+                        "aria-label": getEventAriaLabel(this.props.mxEvent, room, this.props.isTwelveHour),
                         "aria-live": ariaLive,
                         "aria-atomic": "true",
                         "data-scroll-tokens": scrollToken,

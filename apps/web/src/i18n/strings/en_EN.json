@@ -3330,6 +3330,21 @@
         "short_seconds": "%(value)ss"
     },
     "timeline": {
+        "aria_label": {
+            "audio": "Audio file: %(name)s",
+            "audio_generic": "Audio file",
+            "decryption_failure": "Unable to decrypt message",
+            "event_generic": "Room event",
+            "file": "File: %(name)s",
+            "file_generic": "File",
+            "image": "Image: %(name)s",
+            "image_generic": "Image",
+            "message": "%(sender)s: %(body)s, sent at %(time)s",
+            "message_with_reply": "%(sender)s: %(body)s, in reply to %(quotedSender)s: %(quotedBody)s, sent at %(time)s",
+            "redacted": "Message deleted",
+            "video": "Video: %(name)s",
+            "video_generic": "Video"
+        },
         "context_menu": {
             "collapse_reply_thread": "Collapse reply thread",
             "external_url": "Source URL",
@@ -3363,6 +3378,7 @@
         "in_room_name": " in <strong>%(room)s</strong>",
         "io.element.widgets.layout": "%(senderName)s has updated the room layout",
         "late_event_separator": "Originally sent %(dateTime)s",
+        "message_list_label": "Messages",
         "load_error": {
             "no_permission": "Tried to load a specific point in this room's timeline, but you do not have permission to view the message in question.",
             "title": "Failed to load timeline position",
@@ -3746,6 +3762,11 @@
             "two_users": "%(names)s and %(lastPerson)s are typing …"
         },
         "undecryptable_tooltip": "This message could not be decrypted",
+        "unread_marker_label": {
+            "one": "1 unread message",
+            "other": "%(count)s unread messages"
+        },
+        "unread_marker_label_fallback": "Unread messages",
         "url_preview": {
             "close": "Close preview",
             "show_n_more": {

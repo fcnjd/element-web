@@ -41,6 +41,7 @@ import defaultDispatcher from "../../dispatcher/dispatcher";
 import type LegacyCallEventGrouper from "./LegacyCallEventGrouper";
 import WhoIsTypingTile from "../views/rooms/WhoIsTypingTile";
 import ScrollPanel, { type IScrollState } from "./ScrollPanel";
+import { UnreadMarkerItem } from "./UnreadMarkerItem";
 import ErrorBoundary from "../views/elements/ErrorBoundary";
 import Spinner from "../views/elements/Spinner";
 import { type RoomPermalinkCreator } from "../../utils/permalinks/Permalinks";
@@ -214,12 +215,17 @@ interface IState {
     ghostReadMarkers: string[];
     showTypingNotifications: boolean;
     hideSender: boolean;
+    // ID of the event (or READ_MARKER_NAV_ID) that is the active roving-tabindex target; null = none set
+    activeNavEventId: string | null;
 }
 
 interface IReadReceiptForUser {
     lastShownEventId: string;
     receipt: IReadReceiptProps;
 }
+
+/** Sentinel ID used in place of an event ID to indicate the read marker is the active nav target. */
+const READ_MARKER_NAV_ID = "__read_marker__";
 
 /* (almost) stateless UI component which builds the event tiles in the room timeline.
  */
@@ -290,6 +296,7 @@ export default class MessagePanel extends React.Component<IProps, IState> {
             ghostReadMarkers: [],
             showTypingNotifications: SettingsStore.getValue("showTypingNotifications"),
             hideSender: this.shouldHideSender(),
+            activeNavEventId: null,
         };
 
         // Cache these settings on mount since Settings is expensive to query,
@@ -341,6 +348,16 @@ export default class MessagePanel extends React.Component<IProps, IState> {
                 action: Action.EditEvent,
                 event: !event?.isRedacted() ? event : null,
                 timelineRenderingType: this.context.timelineRenderingType,
+            });
+        }
+
+        // If the read marker moved while it was the active nav target, re-focus the new marker position.
+        if (
+            this.state.activeNavEventId === READ_MARKER_NAV_ID &&
+            prevProps.readMarkerEventId !== this.props.readMarkerEventId
+        ) {
+            requestAnimationFrame(() => {
+                this.readMarkerNode.current?.focus({ preventScroll: true, focusVisible: true });
             });
         }
     }
@@ -473,6 +490,126 @@ export default class MessagePanel extends React.Component<IProps, IState> {
         return this.unmounted;
     };
 
+    /**
+     * Returns an ordered array of visible event IDs that are valid arrow-key
+     * navigation targets. The read-marker is intentionally excluded: it is
+     * only used as an entry point (Shift+Tab), never as a step in the
+     * arrow-key walk. This prevents focus loss when the marker moves as
+     * messages are read.
+     */
+    private getVisibleNavIds(): string[] {
+        const ids: string[] = [];
+        for (const mxEv of this.props.events) {
+            if (!this.shouldShowEvent(mxEv)) continue;
+            const eventId = mxEv.getId();
+            if (!eventId) continue;
+            ids.push(eventId);
+        }
+        return ids;
+    }
+
+    /**
+     * Returns the ID of the last visible event in the panel, or null if none.
+     */
+    private getLastVisibleEventId(): string | null {
+        for (let i = this.props.events.length - 1; i >= 0; i--) {
+            const mxEv = this.props.events[i];
+            if (this.shouldShowEvent(mxEv)) {
+                return mxEv.getId() ?? null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Handles ArrowUp/ArrowDown keyboard events on the message list <ol>.
+     */
+    private onListKeyDown = (ev: React.KeyboardEvent<HTMLOListElement>): void => {
+        if (this.context.timelineRenderingType !== TimelineRenderingType.Room) return;
+        if (ev.key === "ArrowUp") {
+            ev.preventDefault();
+            this.moveNavTarget(-1);
+        } else if (ev.key === "ArrowDown") {
+            ev.preventDefault();
+            this.moveNavTarget(1);
+        }
+        // Tab / Shift+Tab: let browser handle natural exit from list
+    };
+
+    /**
+     * Moves the roving-tabindex navigation target by `direction` steps.
+     */
+    private moveNavTarget(direction: -1 | 1): void {
+        const visibleIds = this.getVisibleNavIds();
+        if (visibleIds.length === 0) return;
+
+        let currentIndex: number;
+        if (this.state.activeNavEventId === READ_MARKER_NAV_ID && this.props.readMarkerEventId) {
+            // The read marker sits logically between readMarkerEventId and the next event.
+            // ArrowUp → go to the last-read event; ArrowDown → go to the first unread event.
+            const markerEventIndex = visibleIds.indexOf(this.props.readMarkerEventId);
+            if (direction === -1) {
+                // ArrowUp: land on the event the marker is attached to
+                currentIndex = markerEventIndex + 1; // +1 so the -1 below brings us to markerEventIndex
+            } else {
+                // ArrowDown: land on the first event after the marker
+                currentIndex = markerEventIndex; // +1 below brings us to markerEventIndex + 1
+            }
+        } else {
+            currentIndex = this.state.activeNavEventId
+                ? visibleIds.indexOf(this.state.activeNavEventId)
+                : -1;
+        }
+
+        let nextIndex: number;
+        if (currentIndex === -1) {
+            nextIndex = direction === 1 ? 0 : visibleIds.length - 1;
+        } else {
+            nextIndex = Math.max(0, Math.min(visibleIds.length - 1, currentIndex + direction));
+        }
+
+        const nextId = visibleIds[nextIndex];
+        // Focus before setState: tabIndex=-1 tiles are already programmatically focusable,
+        // so we don't need to wait for the re-render that sets tabIndex=0.
+        this.eventTiles[nextId]?.focus();
+        this.setState({ activeNavEventId: nextId });
+    }
+
+    /**
+     * Focuses the message list for keyboard navigation, used when Shift+Tab is pressed
+     * from the composer. Focuses the unread marker if there are actual unread messages,
+     * otherwise focuses the last visible message.
+     */
+    public focusForNavigation(): void {
+        if (this.context.timelineRenderingType !== TimelineRenderingType.Room) return;
+
+        // The unread marker is only meaningful when it is NOT at the last event (i.e. there
+        // are actual unread messages after it) AND readMarkerVisible is set AND it is within
+        // the rendered scroll window.
+        const lastEventId = this.props.events[this.props.events.length - 1]?.getId();
+        const markerHasUnreads =
+            !!this.props.readMarkerEventId &&
+            !!this.props.readMarkerVisible &&
+            this.props.readMarkerEventId !== lastEventId &&
+            this.getReadMarkerPosition() !== null;
+
+        if (markerHasUnreads) {
+            // Focus before setState: UnreadMarkerItem has tabIndex=-1 when not active,
+            // which is already programmatically focusable.
+            this.readMarkerNode.current?.focus({ preventScroll: true, focusVisible: true });
+            this.readMarkerNode.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            this.setState({ activeNavEventId: READ_MARKER_NAV_ID });
+            return;
+        }
+
+        // Otherwise → focus last visible event. tabIndex=-1 tiles are programmatically
+        // focusable before the setState re-render sets tabIndex=0.
+        const eventId = this.getLastVisibleEventId();
+        if (!eventId) return;
+        this.eventTiles[eventId]?.focus();
+        this.setState({ activeNavEventId: eventId });
+    }
+
     public get showHiddenEvents(): boolean {
         return this.context?.showHiddenEvents ?? this._showHiddenEvents;
     }
@@ -510,26 +647,29 @@ export default class MessagePanel extends React.Component<IProps, IState> {
         const visible = !isLastEvent && this.props.readMarkerVisible;
 
         if (this.props.readMarkerEventId === eventId) {
-            let hr;
-            // if the read marker comes at the end of the timeline (except
-            // for local echoes, which are excluded from RMs, because they
-            // don't have useful event ids), we don't want to show it, but
-            // we still want to create the <li/> for it so that the
-            // algorithms which depend on its position on the screen aren't
-            // confused.
             if (visible) {
-                hr = <hr style={{ opacity: 1, width: "99%" }} />;
+                // Render the accessible UnreadMarkerItem only when there are actually unread
+                // messages to announce (i.e. the marker is not at the very end of the timeline).
+                return (
+                    <UnreadMarkerItem
+                        key={"readMarker_" + eventId}
+                        room={this.props.room}
+                        visible={true}
+                        isActiveNavTarget={this.state.activeNavEventId === READ_MARKER_NAV_ID}
+                        liRef={this.readMarkerNode}
+                        scrollToken={eventId}
+                    />
+                );
             }
-
+            // Not visible: fall back to the original positioning-only <li> (no accessible label,
+            // not a tab stop) so the scroll-position algorithms still work.
             return (
                 <li
                     key={"readMarker_" + eventId}
                     ref={this.readMarkerNode}
                     className="mx_MessagePanel_myReadMarker"
                     data-scroll-tokens={eventId}
-                >
-                    {hr}
-                </li>
+                />
             );
         } else if (this.state.ghostReadMarkers.includes(eventId)) {
             // We render 'ghost' read markers in the DOM while they
@@ -842,6 +982,7 @@ export default class MessagePanel extends React.Component<IProps, IState> {
                 showReadReceipts={this.props.showReadReceipts}
                 callEventGrouper={callEventGrouper}
                 hideSender={this.state.hideSender}
+                isActiveNavTarget={this.state.activeNavEventId === eventId}
             />,
         );
 
@@ -1088,6 +1229,14 @@ export default class MessagePanel extends React.Component<IProps, IState> {
                     style={style}
                     stickyBottom={this.props.stickyBottom}
                     fixedChildren={ircResizer}
+                    listProps={
+                        this.context.timelineRenderingType === TimelineRenderingType.Room
+                            ? {
+                                  onKeyDown: this.onListKeyDown,
+                                  "aria-label": _t("timeline|message_list_label"),
+                              }
+                            : undefined
+                    }
                 >
                     {topSpinner}
                     {this.getEventTiles()}

@@ -93,6 +93,11 @@ interface IProps {
     /* onScroll: a callback which is called whenever any scroll happens.
      */
     onScroll?(event: Event): void;
+
+    /* listProps: additional props to spread onto the inner <ol> element.
+     * Useful for passing aria-label, onKeyDown, etc.
+     */
+    listProps?: React.HTMLAttributes<HTMLOListElement>;
 }
 
 /* This component implements an intelligent scrolling list.
@@ -945,7 +950,7 @@ export default class ScrollPanel extends React.Component<IProps> {
             >
                 {this.props.fixedChildren}
                 <div className="mx_RoomView_messageListWrapper">
-                    <ol ref={this.itemlist} className="mx_RoomView_MessageList" aria-live="polite">
+                    <ol ref={this.itemlist} className="mx_RoomView_MessageList" aria-live="polite" {...this.props.listProps}>
                         {this.props.children}
                     </ol>
                 </div>

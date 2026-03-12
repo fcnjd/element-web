@@ -1304,6 +1304,14 @@ class TimelinePanel extends React.Component<IProps, IState> {
         );
     };
 
+    /**
+     * Focus the message list for screen-reader keyboard navigation.
+     * Delegates to the underlying MessagePanel.
+     */
+    public focusForNavigation(): void {
+        this.messagePanel.current?.focusForNavigation();
+    }
+
     /* get the current scroll state. See ScrollPanel.getScrollState for
      * details.
      *

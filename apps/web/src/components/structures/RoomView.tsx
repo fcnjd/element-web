@@ -137,6 +137,7 @@ import { PinnedMessageBanner } from "../views/rooms/PinnedMessageBanner";
 import { ScopedRoomContextProvider, useScopedRoomContext } from "../../contexts/ScopedRoomContext";
 import { DeclineAndBlockInviteDialog } from "../views/dialogs/DeclineAndBlockInviteDialog";
 import { type FocusMessageSearchPayload } from "../../dispatcher/payloads/FocusMessageSearchPayload.ts";
+// FocusMessageListPayload is used for the dispatcher action type - no import needed as we use the action enum
 import { isRoomEncrypted } from "../../hooks/useIsEncrypted";
 import { type RoomViewStore } from "../../stores/RoomViewStore.tsx";
 import { RoomStatusBarViewModel } from "../../viewmodels/room/RoomStatusBar.ts";
@@ -1353,6 +1354,10 @@ export class RoomView extends React.Component<IRoomProps, IRoomState> {
                     this.onSearch(payload.initialText);
                 }
                 break;
+
+            case Action.FocusMessageList:
+                this.messagePanel?.focusForNavigation();
+                break;
         }
     };
 
@@ -1983,6 +1988,10 @@ export class RoomView extends React.Component<IRoomProps, IRoomState> {
     // jump up to wherever our read marker is
     private jumpToReadMarker = (): void => {
         this.messagePanel?.jumpToReadMarker();
+        // Focus the unread marker for screen reader users after the scroll settles
+        requestAnimationFrame(() => {
+            this.messagePanel?.focusForNavigation();
+        });
     };
 
     // update the read marker to match the read-receipt

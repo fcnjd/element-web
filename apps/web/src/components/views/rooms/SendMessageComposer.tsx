@@ -60,6 +60,7 @@ import { type IDiff } from "../../../editor/diff";
 import { getBlobSafeMimeType } from "../../../utils/blobs";
 import { EMOJI_REGEX } from "../../../HtmlUtils";
 import { attachMentions, attachRelation } from "../../../utils/messages";
+import { type FocusMessageListPayload } from "../../../dispatcher/payloads/FocusMessageListPayload";
 
 // The prefix used when persisting editor drafts to localstorage.
 export const EDITOR_STATE_STORAGE_PREFIX = "mx_cider_state_";
@@ -185,6 +186,14 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
         if (this.editorRef.current?.isComposing(event)) {
             return;
         }
+
+        // Shift+Tab: move focus to the message list for screen reader navigation
+        if (event.key === "Tab" && event.shiftKey) {
+            event.preventDefault();
+            dis.dispatch<FocusMessageListPayload>({ action: Action.FocusMessageList });
+            return;
+        }
+
         const replyingToThread = this.props.relation?.key === THREAD_RELATION_TYPE.name;
         const action = getKeyBindingsManager().getMessageComposerAction(event);
         switch (action) {

@@ -94,6 +94,11 @@ export enum Action {
     FocusThreadsPanel = "focus_threads_panel",
 
     /**
+     * Focuses the message list for keyboard navigation. Should be used with FocusMessageListPayload.
+     */
+    FocusMessageList = "focus_message_list",
+
+    /**
      * Opens the user menu (previously known as the top left menu). No additional payload information required.
      */
     ToggleUserMenu = "toggle_user_menu",
