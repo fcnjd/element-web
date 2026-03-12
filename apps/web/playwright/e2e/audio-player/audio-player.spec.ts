@@ -113,6 +113,7 @@ test.describe("Audio player", { tag: ["@no-firefox", "@no-webkit"] }, () => {
             `,
             mask: [page.getByTestId("audio-player-seek")],
             clip: undefined,
+            hideJumpToBottomButton: true,
         };
 
         // Take a snapshot of mx_EventTile_last on IRC layout
