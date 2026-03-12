@@ -5,7 +5,7 @@
  * Please see LICENSE files in the repository root for full details.
  */
 
-import React, { type JSX, useCallback, useMemo } from "react";
+import React, { type JSX, useCallback, useMemo, type PropsWithChildren } from "react";
 import { GroupedVirtuoso } from "react-virtuoso";
 
 import { useVirtualizedList, type VirtualizedListContext, type VirtualizedListProps } from "../virtualized-list";
@@ -227,6 +227,18 @@ export function GroupedVirtualizedList<Header, Item, Context>(
         [getGroupHeaderComponent, onFocusForHeader, groups],
     );
 
+    // Remove sticky headers
+    const components = useMemo(
+        () => ({
+            TopItemList: ({ children, ...rest }: PropsWithChildren<{ style?: React.CSSProperties }>) => (
+                <div {...rest} style={{ ...rest.style, position: "relative" }}>
+                    {children}
+                </div>
+            ),
+        }),
+        [],
+    );
+
     return (
         <GroupedVirtuoso
             // note that either the container of direct children must be focusable to be axe
@@ -237,6 +249,7 @@ export function GroupedVirtualizedList<Header, Item, Context>(
             itemContent={getItemComponentInternal}
             groupContent={getGroupHeaderComponentInternal}
             {...virtuosoProps}
+            components={components}
         />
     );
 }
