@@ -7,9 +7,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
+import { describe, it, expect } from "vitest";
 import { TweakName, PushRuleActionName, type TweakHighlight, type TweakSound } from "matrix-js-sdk/src/matrix";
 
-import { ContentRules, PushRuleVectorState } from "../../../src/notifications";
+import { ContentRules, PushRuleVectorState } from ".";
 
 const NORMAL_RULE = {
     actions: [PushRuleActionName.Notify, { set_tweak: TweakName.Highlight, value: false } as TweakHighlight],
@@ -57,7 +58,7 @@ describe("ContentRules", function () {
             const rules = { global: { content: [NORMAL_RULE, USERNAME_RULE] } };
 
             const parsed = ContentRules.parseContentRules(rules);
-            expect(parsed.rules.length).toEqual(1);
+            expect(parsed.rules).toHaveLength(1);
             expect(parsed.rules[0]).toEqual(NORMAL_RULE);
             expect(parsed.vectorState).toEqual(PushRuleVectorState.ON);
             expect(parsed.externalRules).toEqual([]);
@@ -67,7 +68,7 @@ describe("ContentRules", function () {
             const rules = { global: { content: [LOUD_RULE, USERNAME_RULE] } };
 
             const parsed = ContentRules.parseContentRules(rules);
-            expect(parsed.rules.length).toEqual(1);
+            expect(parsed.rules).toHaveLength(1);
             expect(parsed.rules[0]).toEqual(LOUD_RULE);
             expect(parsed.vectorState).toEqual(PushRuleVectorState.LOUD);
             expect(parsed.externalRules).toEqual([]);
@@ -77,10 +78,10 @@ describe("ContentRules", function () {
             const rules = { global: { content: [LOUD_RULE, NORMAL_RULE, USERNAME_RULE] } };
 
             const parsed = ContentRules.parseContentRules(rules);
-            expect(parsed.rules.length).toEqual(1);
+            expect(parsed.rules).toHaveLength(1);
             expect(parsed.rules[0]).toEqual(LOUD_RULE);
             expect(parsed.vectorState).toEqual(PushRuleVectorState.LOUD);
-            expect(parsed.externalRules.length).toEqual(1);
+            expect(parsed.externalRules).toHaveLength(1);
             expect(parsed.externalRules[0]).toEqual(NORMAL_RULE);
         });
     });
